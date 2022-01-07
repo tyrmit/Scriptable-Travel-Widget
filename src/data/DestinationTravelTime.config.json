@@ -1,0 +1,21 @@
+{
+    "known_places": [
+        {
+            "place_id": "ChIJ93vJnshC1moRUfuqu-R1I9s",
+            "location_names": [
+                "place_id:ChIJ93vJnshC1moRUfuqu-R1I9s",
+                "12/60+Collins+St+Melbourne+VIC+3000+Australia",
+                "Public+Libraries+Victoria"
+            ],
+            "preferred_routes": ["National Highway M31 and M31"]
+        },
+        {
+            "place_id": "ChIJ3S-JXmauEmsRUcIaWtf4MzE",
+            "location_names": [
+                "place_id:ChIJ3S-JXmauEmsRUcIaWtf4MzE",
+                "Sydney+Harbour+Bridge+Sydney+NSW+Australia"
+            ],
+            "preferred_routes": ["National Highway M31 and M31"]
+        }
+    ]
+}
