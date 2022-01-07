@@ -27,10 +27,10 @@ The widget calls the API once each time it refreshes, provided there is an event
 
 A number of measures have been implemented to keep API calls to a minimum:
 - The widget will only pick up a calendar event that is within the next 2 hours. If an event is more than 2 hours in the future, the widget will ignore it until it is within that 2 hour window.
-- The widget will refresh no more than every 5 minutes.
+- The widget will refresh no more than every 5 minutes. How often a widget refreshes is largely up to iOS, and the device may opt to refresh the widget less often depending on various factors, but it will not be more often than every 5 minutes.
 - The widget will not start to refresh every 5 minutes until there is double the travel time before the event start time.
  
-For example, if you have an event starting at 3pm and it will take ~20 mins to get there, the widget will pick up the event at 1pm and see that the travel time is 20 mins, and then not refresh again until 2:20pm (40 mins before the start time). It will then start to refresh every 5 minutes until 3pm. We therefore have 10 API calls, costing 10c. If a destination would take 1 hour or longer to travel to, then it will incur the maximum cost of 24c by refreshing every 5 minutes for the full 2 hour window. Obviously if you tap the widget to manually refresh it that will incur additional API call charges.
+For example, if you have an event starting at 3pm and it will take ~20 mins to get there, the widget will pick up the event at 1pm and see that the travel time is 20 mins, and then not refresh again until 2:20pm (40 mins before the start time). It will then start to refresh every 5 minutes until 3pm. We therefore have 10 API calls, costing 10c. If a destination would take 1 hour or longer to travel to, then it may incur the maximum cost of 24c by refreshing every 5 minutes for the full 2 hour window. Obviously if you tap the widget to manually refresh it that will incur additional API call charges.
 
 As always, please ensure you fully understand and accept the terms of using Google's APIs and Cloud Platform before activating and using them.
 
