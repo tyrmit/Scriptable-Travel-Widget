@@ -3,8 +3,7 @@
 // icon-color: deep-green; icon-glyph: car-side;
 /**
  * @author Todd Hosey
- * @version 1.0
- * @copyright GNU General Public License, version 3
+ * @license GNU General Public License, version 3
  * @exports getTravelTime function
  * @todo
  * -    Find cause of kCLerror 1 in widget
@@ -24,8 +23,13 @@ if (!routeModule) {
 
 const routeInfoPromise = routeModule.getTravelTime(true);
 
-// ----------------------------------------------------------
-// FUNCTION TO ADD A NOTIFICATION WHEN IT'S TIME TO LEAVE
+/**
+ * Uses the title, message and triggerTimeSeconds to schedule a notification. If a pending notification with
+ * the same title already exists, it will update that notification rather than create a new one.
+ * @param {string} title The title of the notification
+ * @param {string} message The message body of the notification
+ * @param {number} triggerTimeSeconds Date/time in seconds since the UNIX epoch for the notification to trigger
+ */
 async function addUpdateNotification(title, message, triggerTimeSeconds) {
     const triggerTime = new Date();
     triggerTime.setTime(triggerTimeSeconds);
@@ -78,9 +82,8 @@ async function addUpdateNotification(title, message, triggerTimeSeconds) {
     }
 }
 
-// ----------------------------------------------------------
-// DO AS MUCH AS WE CAN TO SET UP THE WIDGET IN PARALLEL TO THE routeInfoPromise RUNNING
-const padding = 4;
+// Start setting up the widget here before we need the routeInfo
+const padding = 8;
 
 const widget = new ListWidget();
 widget.setPadding(padding, padding, padding, padding);
@@ -96,20 +99,15 @@ mainNumberStack.bottomAlignContent();
 
 const mainMinStack = mainRowStack.addStack();
 mainMinStack.bottomAlignContent();
-mainMinStack.setPadding(0, 0, 15, 0);
+mainMinStack.setPadding(0, 0, 12, 0);
 
 const subStack = widget.addStack();
 
-// ----------------------------------------------------------
-// NOW WAIT FOR THE ROUTEINFO
+// Now wait for the routeInfo
 const routeInfo = await routeInfoPromise;
 console.log(JSON.stringify(routeInfo));
 
-// ----------------------------------------------------------
-// USE THE routeInfo TO SET THE NOTIFICATION
-
-// Calculate the notification trigger time. If the trigger time is more than 10 minutes away, set the time to 10 minutes before
-// The notification message is also dependent on the trigger time ('get ready to leave' VS 'leave now')
+// Calculate the notification trigger time amd set the notification. If the trigger time is more than 10 minutes away, also set a notification 10 mins before
 if (routeInfo.arrivalTargetTime) {
     const notificationTriggerTime = new Date();
     let notificationTitle = 'Leave Now';
@@ -139,9 +137,7 @@ if (routeInfo.arrivalTargetTime) {
     }
 }
 
-// ----------------------------------------------------------
-// USE THE routeInfo TO FINISH THE WIDGET
-
+// Finish the widget with the routeInfo
 const routeTimeMinutes = Math.ceil(routeInfo.routeTimeSeconds / 60);
 
 const headerText = headerStack.addText(routeInfo.destinationName);
@@ -150,7 +146,7 @@ headerText.font = Font.mediumSystemFont(16);
 const mainText = mainNumberStack.addText(
     routeTimeMinutes.toString().padStart(2, '0')
 );
-mainText.font = Font.mediumSystemFont(72);
+mainText.font = Font.mediumSystemFont(64);
 
 if (routeInfo.arrivalTime && routeInfo.arrivalTargetTime) {
     const textColor =
@@ -168,8 +164,7 @@ minText.font = Font.mediumSystemFont(24);
 const subText = subStack.addText(`Using ${routeInfo.routeName}`);
 subText.font = Font.mediumSystemFont(12);
 
-// ----------------------------------------------------------
-// SET WIDGET REFRESH TIME TO NO EARLIER THAN THE DUE TIME LESS DOUBLE THE TRAVEL TIME, OR IF THAT'S LESS THAN THE CURRENT TIME THEN IN 5 MINS
+// Set the widget refresh time for no earlier than the due time less travel time x 2. If that's less than the current time, set tefresh time for no earlier than 5 mins from now instead.
 const refreshTime = new Date();
 if (routeInfo.arrivalTime && routeInfo.arrivalTargetTime) {
     refreshTime.setTime(

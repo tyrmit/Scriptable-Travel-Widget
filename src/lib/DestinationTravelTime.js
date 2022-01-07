@@ -1,8 +1,7 @@
 /**
  * @module DestinationTravelTime
  * @author Todd Hosey
- * @version 1.0
- * @copyright GNU General Public License, version 3
+ * @license GNU General Public License, version 3
  * @exports getTravelTime function
  * @todo
  * <ul>
