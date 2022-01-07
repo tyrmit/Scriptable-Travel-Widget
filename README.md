@@ -1,1 +1,26 @@
 # Scriptable-Travel-Widget
+A script for the iOS app Scriptable to be used in a widget on the home screen. The widget will pull the next event from a designated calendar, and check the travel time between the current location and the location in the calendar event using the Google Maps Directions Web API. The travel time will be displayed in the widget and will factor in current traffic as well as adding a buffer for good measure. The widget will also set notifications to display 10 minutes before the time to leave, and again when it is time to leave in order to arrive by the calendar event start time.
+
+### Prerequisites
+Prerequisites for using this script:
+1. Install the Scriptable app from the App Store if you haven't already :)
+2. Enable iCloud drive
+3. Create a Google Maps API key for the Directions API
+4. Enter the API key in Keychain (refer below for more detail)
+5. Set up a 'Travel Destinations' iCloud calendar - this is the calendar that will be checked for events
+
+### Entering the Maps API in Keychain
+The simplest way to do this is to open the scriptable app and create a new script, enter the following code and run:
+`Keychain.set('MAPS_API_KEY', 'your API key goes here');`
+
+Note that the Keychain key must be "MAPS_API_KEY", that's what the widget will try to find.
+
+### Installing the Widget/Script
+Download the files and folders in the src folder and copy them to the Scriptable iCloud folder. If done correctly you should see the Travel Widget script in the Scriptable app.
+
+Once the script is good to go, create a new Scriptable widget on your home screen and point it at the Travel Widget script. Set the 'When Interacting' action to 'Run Script' so you can make the widget update on demand when you tap the widget.
+
+**Note:** The widget will only pick up a calendar event that is within the next 2 hours. It will also only refresh more frequently as the event gets closer, and never more than every 5 minutes. This is to save on API calls, which costs $$$s. Keeping the API calls down should keep the usage for this widget well inside the monthly credit so there is no cost :)
+
+### Configuring Known Places
+You can specify known places and the preferred routes to them in the `/data/DestinationTravelTime.config.json` file. There is an example file already in the repository. If the destination of a calendar event isn't recognised as a known place from this file, the route with the greatest travel time is chosen instead.
