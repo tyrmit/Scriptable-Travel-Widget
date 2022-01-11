@@ -1,0 +1,28 @@
+{
+  "name": "scriptable-travel-widget",
+  "version": "1.0.0",
+  "description": "Scriptable iOS widget script for showing travel time to a calendar event destination",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tyrmit/Scriptable-Travel-Widget.git"
+  },
+  "keywords": [
+    "ios",
+    "widget",
+    "scriptable"
+  ],
+  "author": "Todd Hosey",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/tyrmit/Scriptable-Travel-Widget/issues"
+  },
+  "homepage": "https://github.com/tyrmit/Scriptable-Travel-Widget#readme",
+  "devDependencies": {
+    "@scriptable-ios/eslint-config": "^1.6.4",
+    "@types/scriptable-ios": "^1.6.4"
+  }
+}

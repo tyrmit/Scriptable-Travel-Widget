@@ -5,8 +5,7 @@
  * @author Todd Hosey
  * @license GNU General Public License, version 3
  * @exports getTravelTime function
- * @todo
- * -    Find cause of kCLerror 1 in widget
+ *
  */
 
 let routeModule = null;

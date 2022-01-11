@@ -1,6 +1,7 @@
 /**
  * @module DestinationTravelTime
  * @author Todd Hosey
+ * @version 1.0
  * @license GNU General Public License, version 3
  * @exports getTravelTime function
  * @todo
@@ -8,9 +9,11 @@
  * <li>Cope with no API key in keychain</li>
  * <li>Cope with no config file in data folder</li>
  * <li>Cope with no location in keychain</li>
- * <li>Add comments/documentation</li>
  * </ul>
  */
+
+const DEBUG = false;
+const logger = DEBUG ? importModule('/lib/Logger').logger : null;
 
 const apiKey = Keychain.get('MAPS_API_KEY');
 
@@ -20,14 +23,30 @@ const apiKey = Keychain.get('MAPS_API_KEY');
  * @returns A promise that resolves to a JSON object of the parsed string from the config.json file
  */
 async function getConfig() {
+    if (DEBUG) logger.pushFunction('getConfig', 'getTravelTime');
+
     const fm = FileManager.iCloud();
     const dataPath = fm.joinPath(fm.documentsDirectory(), 'data');
     const dataFile = fm.joinPath(dataPath, 'DestinationTravelTime.config.json');
+    if (DEBUG) logger.writeToLogFile('Config file is ' + dataFile, 'getConfig');
 
     if (!fm.isFileDownloaded(dataFile)) {
         await fm.downloadFileFromiCloud(dataFile);
+        if (DEBUG)
+            logger.writeToLogFile(
+                dataFile + ' downloaded from iCloud',
+                'getConfig'
+            );
     }
     const content = fm.readString(dataFile);
+
+    if (DEBUG) {
+        logger.writeToLogFile(
+            'content from data file has been read',
+            'getConfig'
+        );
+        logger.popFunction('getConfig');
+    }
 
     return JSON.parse(content);
 }
@@ -55,8 +74,16 @@ function replaceFancyQuotes(origText) {
  * @returns A Promise resolving to the nextEvent object, which contains all the detail of the next event from the specified calendar
  */
 async function getNextEvent(calendarName) {
+    if (DEBUG) logger.pushFunction('getNextEvent', 'getTravelTime');
+
     const destinationCalendar = await Calendar.forEventsByTitle(calendarName);
     const destinationEvents = await CalendarEvent.today([destinationCalendar]);
+
+    if (DEBUG)
+        logger.writeToLogFile(
+            'Retrieved calendar events for today',
+            'getNextEvent'
+        );
 
     const endOfTheDay = new Date();
     endOfTheDay.setHours(0);
@@ -64,6 +91,12 @@ async function getNextEvent(calendarName) {
     endOfTheDay.setSeconds(0);
     endOfTheDay.setMilliseconds(0);
     endOfTheDay.setDate(endOfTheDay.getDate() + 1);
+
+    if (DEBUG)
+        logger.writeToLogFile(
+            'endOfTheDay date set to ' + endOfTheDay,
+            'getNextEvent'
+        );
 
     const now = new Date();
 
@@ -94,11 +127,15 @@ async function getNextEvent(calendarName) {
                     .replaceAll(/–/gi, '-'),
                 time: ev.startDate,
             };
-
-            if (ev.notes && ev.notes.substring(0, 1) === '{') {
-                nextEvent.options = JSON.parse(replaceFancyQuotes(ev.notes));
-            }
         }
+    }
+
+    if (DEBUG) {
+        logger.writeToLogFile(
+            'nextEvent object determined: ' + JSON.stringify(nextEvent),
+            'getNextEvent'
+        );
+        logger.popFunction('getNextEvent');
     }
 
     return nextEvent;
@@ -115,14 +152,50 @@ async function getNextEvent(calendarName) {
  * @returns A Promise resolving to the myLocation object, which contains the detail from the device on the current location.
  */
 async function getCurrentLocation() {
+    if (DEBUG) logger.pushFunction('getCurrentLocation', 'getTravelTime');
+
     // Setting accuracy to a hundred meters is the best balance of accuracy and speed. Anything more accurate takes too long.
     Location.setAccuracyToHundredMeters();
-    const myLocation = await Location.current();
+    let myLocation = null;
+    try {
+        myLocation = await Location.current();
+        if (DEBUG)
+            logger.writeToLogFile(
+                'Location retrieved: ' + JSON.stringify(myLocation),
+                'getCurrentLocation'
+            );
+    } catch (err) {
+        if (DEBUG) logger.writeToLogFile(err, 'getCurrentLocation', 'ERROR');
+    }
 
     if (!myLocation?.latitude || !myLocation?.longitude) {
+        if (DEBUG)
+            logger.writeToLogFile(
+                'Could not retrieve location from device, so looking for it in the keychain',
+                'getCurrentLocation'
+            );
         myLocation = JSON.parse(Keychain.get('LAST_LOC_LAT_LONG'));
+        if (DEBUG)
+            logger.writeToLogFile(
+                'Location retrieved from keychain: ' +
+                    JSON.stringify(myLocation),
+                'getCurrentLocation'
+            );
     } else {
+        if (DEBUG)
+            logger.writeToLogFile(
+                'Recording location in keychain',
+                'getCurrentLocation'
+            );
         Keychain.set('LAST_LOC_LAT_LONG', JSON.stringify(myLocation));
+    }
+
+    if (DEBUG) {
+        logger.writeToLogFile(
+            'Returning location: ' + JSON.stringify(myLocation),
+            'getCurrentLocation'
+        );
+        logger.popFunction('getCurrentLocation');
     }
 
     return myLocation;
@@ -138,14 +211,38 @@ async function getCurrentLocation() {
  * error.
  */
 async function getPossibleRoutes(apiKey, myLocation, destination) {
+    if (DEBUG) {
+        logger.pushFunction('getPossibleRoutes', 'getTravelTime');
+        logger.writeToLogFile(
+            'Calling Google Maps API to retrieve directions info',
+            'getPossibleRoutes'
+        );
+    }
+
     const mapsUrl = `https://maps.googleapis.com/maps/api/directions/json?key=${apiKey}&origin=${myLocation.latitude},${myLocation.longitude}&destination=${destination}&alternatives=true&departure_time=now&traffic_model=pessimistic`;
-    console.log('Calling Maps API');
-    console.log(mapsUrl);
+    if (DEBUG)
+        logger.writeToLogFile(
+            "Maps URL = '" + mapsUrl + "'",
+            'getPossibleRoutes'
+        );
 
     const mapsReq = new Request(mapsUrl);
     const mapsResult = await mapsReq.loadJSON();
 
     if (mapsResult?.status !== 'OK') {
+        if (DEBUG) {
+            logger.writeToLogFile(
+                mapsResult?.status,
+                'getPossibleRoutes',
+                'ERROR'
+            );
+            logger.writeToLogFile(
+                mapsResult?.error_message,
+                'getPossibleRoutes',
+                'ERROR'
+            );
+        }
+
         return [
             {
                 name: 'Maps API error',
@@ -172,6 +269,15 @@ async function getPossibleRoutes(apiKey, myLocation, destination) {
                 return 0;
             }
         });
+
+    if (DEBUG) {
+        logger.writeToLogFile(
+            'Returning possibleRoutes: ' + JSON.stringify(possibleRoutes),
+            'getPossibleRoutes'
+        );
+        logger.popFunction('getPossibleRoutes');
+    }
+
     return possibleRoutes;
 }
 
@@ -184,15 +290,21 @@ async function getPossibleRoutes(apiKey, myLocation, destination) {
  * @returns chosenRoute object, which has details of the route that was chosen.
  */
 function getChosenRoute(possibleRoutes, knownPlaces, destination) {
+    if (DEBUG) logger.pushFunction('getChosenRoute', 'getTravelTime');
+
     let chosenRoute = null;
     const knownPlace = knownPlaces.find((place) =>
         place.location_names.includes(destination)
     );
+
     if (knownPlace) {
-        console.log(
-            destination +
-                " is a known place. Let's see if there's a matching preferred route..."
-        );
+        if (DEBUG)
+            logger.writeToLogFile(
+                destination +
+                    " is a known place. Let's see if there's a matching preferred route...",
+                'getChosenRoute'
+            );
+
         chosenRoute = possibleRoutes.find((route) =>
             knownPlace.preferred_routes.includes(route.name)
         );
@@ -200,14 +312,22 @@ function getChosenRoute(possibleRoutes, knownPlaces, destination) {
 
     // If we still don't have a chosen route here, set it to the first in the possibleRoutes array (will be the route with the longest travel time)
     if (!chosenRoute) {
-        console.log(
-            'No preferred route found, so taking the route with the highest travel time'
-        );
+        if (DEBUG)
+            logger.writeToLogFile(
+                'No preferred route found, so taking the route with the highest travel time',
+                'getChosenRoute'
+            );
+
         chosenRoute = possibleRoutes[0];
     } else {
-        console.log('Preferred route is ' + chosenRoute.name);
+        if (DEBUG)
+            logger.writeToLogFile(
+                'Preferred route is ' + chosenRoute.name,
+                'getChosenRoute'
+            );
     }
 
+    if (DEBUG) logger.popFunction('getChosenRoute');
     return chosenRoute;
 }
 
@@ -230,12 +350,22 @@ async function getTravelTime(
     bePessimistic = false,
     calendarName = 'Travel Destinations'
 ) {
-    const locationPromise = getCurrentLocation();
+    if (DEBUG) {
+        await logger.openLogFile('DestinationTravelTime.log', false);
+        logger.pushFunction('getTravelTime');
+        logger.writeToLogFile('API key from keychain retrieved: ' + apiKey);
+    }
+
     const configPromise = getConfig();
     const nextEvent = await getNextEvent(calendarName);
 
     if (nextEvent.title === 'none') {
-        console.log('Nowhere to go for the rest of the day');
+        if (DEBUG)
+            logger.writeToLogFile(
+                'Nowhere to go for the rest of the day',
+                'getTravelTime'
+            );
+
         return {
             routeName: 'none',
             routeTimeSeconds: 0,
@@ -243,7 +373,7 @@ async function getTravelTime(
         };
     }
 
-    const myLocation = await locationPromise;
+    const myLocation = await getCurrentLocation();
     const possibleRoutes = await getPossibleRoutes(
         apiKey,
         myLocation,
@@ -251,9 +381,13 @@ async function getTravelTime(
     );
 
     if (possibleRoutes[0].error) {
-        console.error(
-            `Google maps returned status ${possibleRoutes[0].status} - "${possibleRoutes[0].error}"`
-        );
+        if (DEBUG)
+            logger.writeToLogFile(
+                `Google maps returned status ${possibleRoutes[0].status} - "${possibleRoutes[0].error}"`,
+                'getTravelTime',
+                'ERROR'
+            );
+
         return {
             routeName: 'none',
             routeTimeSeconds: 0,
@@ -261,17 +395,23 @@ async function getTravelTime(
         };
     }
 
-    console.log('possibleRoutes = ' + JSON.stringify(possibleRoutes));
+    if (DEBUG)
+        logger.writeToLogFile(
+            'possibleRoutes = ' + JSON.stringify(possibleRoutes),
+            'getTravelTime'
+        );
 
     // If there is a preferred route set in the config, try to use that for the chosen route
     const config = await configPromise;
     const chosenRoute = getChosenRoute(possibleRoutes, config.known_places);
 
-    console.log(
-        `Travel time to ${nextEvent.title} is ${Math.ceil(
-            chosenRoute.travelTime / 60
-        )} minutes using ${chosenRoute.name}`
-    );
+    if (DEBUG)
+        logger.writeToLogFile(
+            `Travel time to ${nextEvent.title} is ${Math.ceil(
+                chosenRoute.travelTime / 60
+            )} minutes using ${chosenRoute.name}`,
+            'getTravelTime'
+        );
 
     let finalTravelTime = chosenRoute.travelTime;
     if (bePessimistic) {
@@ -290,10 +430,15 @@ async function getTravelTime(
         arrivalTime: arrivalTime,
     };
 
-    console.log(
-        'returning the following object from DestinationTravelTime.getTravelTime()'
-    );
-    console.log(returnObj);
+    if (DEBUG) {
+        logger.writeToLogFile(
+            'returning the following object from DestinationTravelTime.getTravelTime()',
+            'getTravelTime'
+        );
+        logger.writeToLogFile(JSON.stringify(returnObj), 'getTravelTime');
+        logger.popFunction('getTravelTime');
+        logger.closeLogFile();
+    }
 
     return returnObj;
 }
