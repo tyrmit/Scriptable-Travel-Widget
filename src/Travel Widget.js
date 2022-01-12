@@ -7,6 +7,7 @@
  * @exports getTravelTime function
  *
  */
+'use strict';
 
 let routeModule = null;
 try {

@@ -6,6 +6,7 @@
  * @exports logger object
  *
  */
+'use strict';
 
 const kIndentString = '   ';
 

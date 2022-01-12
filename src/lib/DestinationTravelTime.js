@@ -11,6 +11,7 @@
  * <li>Cope with no location in keychain</li>
  * </ul>
  */
+'use strict';
 
 const DEBUG = false;
 const logger = DEBUG ? importModule('/lib/Logger').logger : null;
