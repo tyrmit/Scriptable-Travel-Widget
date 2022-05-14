@@ -146,7 +146,7 @@ headerText.font = Font.mediumSystemFont(16);
 const mainText = mainNumberStack.addText(
     routeTimeMinutes.toString().padStart(2, '0')
 );
-mainText.font = Font.mediumSystemFont(64);
+mainText.font = Font.mediumSystemFont(48);
 
 if (routeInfo.arrivalTime && routeInfo.arrivalTargetTime) {
     const textColor =
