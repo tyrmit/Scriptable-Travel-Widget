@@ -108,7 +108,7 @@ const logger = (() => {
         }
 
         fileOpen = true;
-        writeToLogFile('***** START OF LOG *****');
+        writeToLogFile('\n\n***** START OF LOG *****');
     };
 
     /**
@@ -207,6 +207,7 @@ const logger = (() => {
     };
 
     return {
+        isFileOpen: fileOpen,
         openLogFile: openLogFile,
         writeToLogFile: writeToLogFile,
         pushFunction: pushFunction,

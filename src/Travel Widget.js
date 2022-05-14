@@ -10,9 +10,10 @@
 'use strict';
 
 const DEBUG = false;
+const LOG_FILE = 'TravelWidget.log';
 const logger = DEBUG ? importModule('/lib/Logger').logger : null;
 if (DEBUG) {
-    await logger.openLogFile('TravelWidget.log', false);
+    await logger.openLogFile(LOG_FILE, false);
     logger.writeToLogFile('Starting TravelWidget script');
 }
 let logInfo = '';
@@ -21,14 +22,14 @@ let routeModule = null;
 try {
     routeModule = importModule('/lib/DestinationTravelTime');
 } catch (err) {
-    if (DEBUG) logger.writeToLogFile(err, null, 'ERROR');
+    if (DEBUG) logger.writeToLogFile(err, undefined, 'ERROR');
     console.error(err);
 }
 
 if (!routeModule) {
     console.log('No routeModule, exiting');
     if (DEBUG) {
-        logger.writeToLogFile('No routeModule, exiting');
+        logger.writeToLogFile('No routeModule, exiting', undefined, 'WARN');
         logger.closeLogFile();
     }
     return;
@@ -124,9 +125,12 @@ const subStack = widget.addStack();
 
 // Now wait for the routeInfo
 const routeInfo = await routeInfoPromise;
-logInfo = JSON.stringify(routeInfo);
+logInfo = `routeInfo:= ${JSON.stringify(routeInfo)}`;
 console.log(logInfo);
-if (DEBUG) logger.writeToLogFile(logInfo);
+if (DEBUG) {
+    if (!logger.isFileOpen) await logger.openLogFile(LOG_FILE, false);
+    logger.writeToLogFile(logInfo);
+}
 
 // Calculate the notification trigger time amd set the notification. If the trigger time is more than 10 minutes away, also set a notification 10 mins before
 if (routeInfo.arrivalTargetTime) {
@@ -206,7 +210,7 @@ if (routeInfo.arrivalTime && routeInfo.arrivalTargetTime) {
     if (DEBUG)
         logger.writeToLogFile(
             'No arrivalTime or arrivalTargetTime set in routeInfo',
-            null,
+            undefined,
             'ERROR'
         );
 }
