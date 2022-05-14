@@ -12,7 +12,7 @@
 const DEBUG = false;
 const logger = DEBUG ? importModule('/lib/Logger').logger : null;
 if (DEBUG) {
-    await logger.openLogFile('DestinationTravelTime.log', false);
+    await logger.openLogFile('TravelWidget.log', false);
     logger.writeToLogFile('Starting TravelWidget script');
 }
 let logInfo = '';
@@ -224,4 +224,6 @@ widget.refreshAfterDate = refreshTime;
 
 Script.setWidget(widget);
 // widget.presentSmall();
+
+if (DEBUG) logger.closeLogFile();
 Script.complete();
